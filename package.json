@@ -1,10 +1,10 @@
 {
-  "name": "github-repo-stats",
+  "name": "github-repo-scraper-api",
   "version": "1.0.0",
   "main": "index.js",
-  "scripts": {
-    "start": "vercel dev"
-  },
-  "dependencies": {},
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "cheerio": "^1.0.0-rc.12",
+    "node-fetch": "^3.3.2"
+  }
 }
