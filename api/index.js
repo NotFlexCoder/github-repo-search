@@ -1,39 +1,38 @@
-import { load } from 'cheerio'
-import fetch from 'node-fetch'
+const https = require('https')
 
-export default async function handler(req, res) {
-  const { user, repo } = req.query
+module.exports = async (req, res) => {
+  const { q = '', sort = 'stars', order = 'desc', page = 1, per_page = 10 } = req.query
+  if (!q) return res.status(400).json({ error: 'Missing query parameter q' })
+  const apiUrl = `https://api.github.com/search/repositories?q=${encodeURIComponent(q)}&sort=${sort}&order=${order}&page=${page}&per_page=${per_page}`
 
-  if (!user || !repo) {
-    res.status(400).json({ error: "Missing user or repo parameter" })
-    return
+  const options = {
+    headers: { 'User-Agent': 'GitHub-Repo-Search' }
   }
 
-  const url = `https://github.com/${user}/${repo}`
-  const response = await fetch(url)
-
-  if (!response.ok) {
-    res.status(response.status).json({ error: "Repository not found or GitHub blocked the request" })
-    return
-  }
-
-  const html = await response.text()
-  const $ = load(html)
-
-  const getText = (selector) => $(selector).first().text().trim().replace(/,/g, '')
-
-  const stars = getText('a[href$="/stargazers"]')
-  const forks = getText('a[href$="/network/members"]')
-  const watchers = getText('a[href$="/watchers"]')
-  const issues = getText('a[href$="/issues"]')
-
-  res.status(200).json({
-    user,
-    repo,
-    stars,
-    forks,
-    watchers,
-    open_issues: issues,
-    url
+  https.get(apiUrl, options, apiRes => {
+    let data = ''
+    apiRes.on('data', chunk => data += chunk)
+    apiRes.on('end', () => {
+      const result = JSON.parse(data)
+      if (!result.items) return res.status(500).json({ error: 'Unexpected API error' })
+      const output = result.items.map(repo => ({
+        name: repo.name,
+        full_name: repo.full_name,
+        owner: repo.owner.login,
+        avatar: repo.owner.avatar_url,
+        url: repo.html_url,
+        description: repo.description,
+        language: repo.language,
+        stars: repo.stargazers_count,
+        forks: repo.forks_count,
+        issues: repo.open_issues_count,
+        created_at: repo.created_at,
+        updated_at: repo.updated_at
+      }))
+      res.setHeader('Content-Type', 'application/json')
+      res.status(200).json(output)
+    })
+  }).on('error', () => {
+    res.status(500).json({ error: 'Failed to fetch from GitHub' })
   })
 }
