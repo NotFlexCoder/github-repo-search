@@ -1,4 +1,4 @@
-import cheerio from 'cheerio'
+import { load } from 'cheerio'
 import fetch from 'node-fetch'
 
 export default async function handler(req, res) {
@@ -18,7 +18,7 @@ export default async function handler(req, res) {
   }
 
   const html = await response.text()
-  const $ = cheerio.load(html)
+  const $ = load(html)
 
   const getText = (selector) => $(selector).first().text().trim().replace(/,/g, '')
 
