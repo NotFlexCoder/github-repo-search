@@ -1,3 +1,6 @@
+import cheerio from 'cheerio'
+import fetch from 'node-fetch'
+
 export default async function handler(req, res) {
   const { user, repo } = req.query
 
@@ -6,27 +9,31 @@ export default async function handler(req, res) {
     return
   }
 
-  const response = await fetch(`https://api.github.com/repos/${user}/${repo}`, {
-    headers: {
-      'User-Agent': 'vercel-github-stats'
-    }
-  })
+  const url = `https://github.com/${user}/${repo}`
+  const response = await fetch(url)
 
   if (!response.ok) {
-    res.status(response.status).json({ error: "GitHub API error" })
+    res.status(response.status).json({ error: "Repository not found or GitHub blocked the request" })
     return
   }
 
-  const data = await response.json()
+  const html = await response.text()
+  const $ = cheerio.load(html)
+
+  const getText = (selector) => $(selector).first().text().trim().replace(/,/g, '')
+
+  const stars = getText('a[href$="/stargazers"]')
+  const forks = getText('a[href$="/network/members"]')
+  const watchers = getText('a[href$="/watchers"]')
+  const issues = getText('a[href$="/issues"]')
 
   res.status(200).json({
-    name: data.name,
-    full_name: data.full_name,
-    description: data.description,
-    stars: data.stargazers_count,
-    forks: data.forks_count,
-    watchers: data.subscribers_count,
-    open_issues: data.open_issues_count,
-    url: data.html_url
+    user,
+    repo,
+    stars,
+    forks,
+    watchers,
+    open_issues: issues,
+    url
   })
 }
