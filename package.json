@@ -1,10 +1,9 @@
 {
-  "name": "github-repo-scraper-api",
+  "name": "github-repo-search",
   "version": "1.0.0",
   "main": "index.js",
-  "type": "module",
-  "dependencies": {
-    "cheerio": "^1.0.0-rc.12",
-    "node-fetch": "^3.3.2"
-  }
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {}
 }
