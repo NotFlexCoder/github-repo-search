@@ -6,7 +6,11 @@ export default async function handler(req, res) {
     return
   }
 
-  const response = await fetch(`https://api.github.com/repos/${user}/${repo}`)
+  const response = await fetch(`https://api.github.com/repos/${user}/${repo}`, {
+    headers: {
+      'User-Agent': 'vercel-github-stats'
+    }
+  })
 
   if (!response.ok) {
     res.status(response.status).json({ error: "GitHub API error" })
